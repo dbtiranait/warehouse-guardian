@@ -19,13 +19,18 @@ public class ConfigLoaderTests {
     }
 
     @Test
-    void testMissingIntReturnsZero() {
-        assertEquals(0, ConfigLoader.getInt("non.existent.int.key"));
+    void testMissingIntThrowsException() {
+        assertThrows(NumberFormatException.class, () -> {
+            ConfigLoader.getInt("non.existent.int.key");
+        });
     }
 
+
     @Test
-    void testInvalidIntFormatReturnsZero() {
-        assertEquals(0, ConfigLoader.getInt("kafka.bootstrap.servers")); // not an int
+    void testInvalidIntThrowsException() {
+        assertThrows(NumberFormatException.class, () -> {
+            ConfigLoader.getInt("kafka.bootstrap.servers");
+        });
     }
 
 }
