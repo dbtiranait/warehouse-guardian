@@ -41,6 +41,16 @@ public class UdpSensorListener {
     private final KafkaSensorProducer kafkaProducer;
 
     /*
+     * The DatagramSocket used for receiving UDP packets.
+     */
+    private final DatagramSocket socket;
+
+    /*
+     * A boolean flag indicating whether the listener is currently running.
+     */
+    private boolean running = false;
+
+    /*
      * Constructor for the UdpSensorListener class.
      * Initializes the type of sensor, port number, and Kafka producer.
      * The port number is loaded from the configuration file using ConfigLoader.
@@ -51,6 +61,15 @@ public class UdpSensorListener {
         this.type = type;
         this.port = ConfigLoader.getInt("sensor." + type + ".port");
         this.kafkaProducer = producer;
+        this.socket = null; // created at runtime in start()
+    }
+
+    // Overloaded constructor (used in tests)
+    public UdpSensorListener(String type, int port, KafkaSensorProducer producer, DatagramSocket socket) {
+        this.type = type;
+        this.port = port;
+        this.kafkaProducer = producer;
+        this.socket = socket;
     }
 
     /*
@@ -60,19 +79,20 @@ public class UdpSensorListener {
      */
     public void start() {
         new Thread(() -> {
-            try (DatagramSocket socket = new DatagramSocket(port)) {
+            try (DatagramSocket localSocket = socket != null ? socket : new DatagramSocket(port)) {
+                running = true;
                 byte[] buffer = new byte[1024];
                 log.info("📡 Listening for {} on UDP port {}", type, port);
-                while (true) {
+                while (running) {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                    socket.receive(packet);
+                    localSocket.receive(packet);
                     String received = new String(packet.getData(), 0, packet.getLength());
                     log.debug("Received: {}", received);
+
                     SensorMessage msg = parseMessage(received);
                     if (msg != null) {
                         kafkaProducer.sendSensorMessage(msg);
-                    }
-                    else {
+                    } else {
                         log.warn("Invalid message: {}", received);
                     }
                 }
@@ -80,6 +100,16 @@ public class UdpSensorListener {
                 log.error("Error on UDP listener for {}: {}", type, e.getMessage(), e);
             }
         }).start();
+    }
+
+    /*
+     * Stops the UDP listener by closing the socket and setting the running flag to false.
+     */
+    public void stop() {
+        this.running = false;
+        if (socket != null && !socket.isClosed()) {
+            socket.close();
+        }
     }
 
     /*

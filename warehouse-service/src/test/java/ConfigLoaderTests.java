@@ -25,7 +25,6 @@ public class ConfigLoaderTests {
         });
     }
 
-
     @Test
     void testInvalidIntThrowsException() {
         assertThrows(NumberFormatException.class, () -> {

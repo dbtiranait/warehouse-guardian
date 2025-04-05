@@ -1,14 +1,21 @@
 import com.denisballa.warehouse.kafka.KafkaSensorProducer;
+import com.denisballa.warehouse.listener.UdpSensorListener;
 import com.denisballa.warehouse.model.SensorMessage;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 
-public class UdpSensorListener {
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+public class UdpSensorListenerTests {
 
     private static final KafkaSensorProducer producer = new KafkaSensorProducer();
-    private static final com.denisballa.warehouse.listener.UdpSensorListener temperatureSensorListener = new com.denisballa.warehouse.listener.UdpSensorListener("temperature", producer);
-    private static final com.denisballa.warehouse.listener.UdpSensorListener humiditySensorListener = new com.denisballa.warehouse.listener.UdpSensorListener("humidity", producer);
+    private static final UdpSensorListener temperatureSensorListener = new com.denisballa.warehouse.listener.UdpSensorListener("temperature", producer);
+    private static final UdpSensorListener humiditySensorListener = new com.denisballa.warehouse.listener.UdpSensorListener("humidity", producer);
 
     @Test
     void testValidTemperatureMessage() {
@@ -85,6 +92,32 @@ public class UdpSensorListener {
         assertNotNull(message);
         assertEquals("t1", message.getSensorId());
         assertEquals(40, message.getValue());
+    }
+
+    @Test
+    void testStartReceivesPacketAndProcessesIt() throws Exception {
+        // Arrange
+        KafkaProducer<String, String> mockKafka = mock(KafkaProducer.class);
+        KafkaSensorProducer mockProducer = new KafkaSensorProducer(mockKafka, "sensor-data");
+
+        // Bind a local UDP socket
+        DatagramSocket socket = new DatagramSocket(9999); // any available port
+        UdpSensorListener listener = new UdpSensorListener("test", 9999, mockProducer, socket);
+
+        listener.start();
+
+        // Send a test UDP packet
+        byte[] data = "sensor_id=test1;value=99".getBytes();
+        DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getLocalHost(), 9999);
+        DatagramSocket senderSocket = new DatagramSocket();
+        senderSocket.send(packet);
+        senderSocket.close();
+
+        Thread.sleep(500); // allow background thread to process
+
+        listener.stop();
+        verify(mockKafka, atLeastOnce()).send(any());
+
     }
 
 }

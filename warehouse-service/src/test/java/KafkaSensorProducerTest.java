@@ -1,6 +1,5 @@
 import com.denisballa.warehouse.kafka.KafkaSensorProducer;
 import com.denisballa.warehouse.model.SensorMessage;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
