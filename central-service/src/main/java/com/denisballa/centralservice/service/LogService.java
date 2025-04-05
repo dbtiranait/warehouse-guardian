@@ -12,6 +12,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class LogService {
 
+    /**
+     * Logs the sensor message in a specific format.
+     *
+     * @param message the sensor message to log
+     */
     public void log(SensorMessage message) {
         String output = String.format("📥 SENSOR LOG | ID: %s | TYPE: %s | VALUE: %d",
                 message.getSensorId(),

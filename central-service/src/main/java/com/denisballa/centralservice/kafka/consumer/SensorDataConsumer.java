@@ -26,6 +26,11 @@ public class SensorDataConsumer {
         this.logService = logService;
     }
 
+    /**
+     * Consumes messages from the Kafka topic and processes them.
+     *
+     * @param record the Kafka consumer record containing the message
+     */
     @KafkaListener(
             topics = "${kafka.topic}",
             groupId = "${kafka.group-id}"
