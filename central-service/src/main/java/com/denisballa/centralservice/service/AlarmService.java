@@ -2,6 +2,7 @@ package com.denisballa.centralservice.service;
 
 import com.denisballa.centralservice.model.SensorMessage;
 import com.denisballa.centralservice.config.ThresholdProperties;
+import com.denisballa.centralservice.util.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -33,13 +34,7 @@ public class AlarmService {
      * @param message The SensorMessage object containing the sensor ID, type, and value.
      */
     public void process(SensorMessage message) {
-        int value = message.getValue();
-        boolean alarm = switch (message.getType()) {
-            case "temperature" -> value > props.getTemperature();
-            case "humidity" -> value > props.getHumidity();
-            default -> false;
-        };
-        if (alarm) {
+        if (Utils.exceedsThreshold(message.getType(), message.getValue(), props.getTemperature(), props.getHumidity())) {
             log.warn("🚨 ALARM: {} reported value {} exceeds threshold!", message.getSensorId(), message.getValue());
         } else {
             log.info("✅ Normal: {} reported value {}", message.getSensorId(), message.getValue());
