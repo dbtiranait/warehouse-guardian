@@ -20,6 +20,10 @@ public class ConfigLoader {
     }
 
     public static String get(String key) {
+        String envValue = System.getenv(key);
+        if(envValue != null) {
+            return envValue;
+        }
         return props.getProperty(key);
     }
 

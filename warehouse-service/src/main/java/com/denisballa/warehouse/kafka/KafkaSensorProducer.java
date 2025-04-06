@@ -24,7 +24,7 @@ public class KafkaSensorProducer {
     /*
     * KafkaProducer is a thread-safe class that allows you to send messages to a Kafka topic.
      */
-    private final KafkaProducer<String, String> producer;
+    private KafkaProducer<String, String> producer;
     /*
     * ObjectMapper is used to convert Java objects to JSON format and vice versa.
      */
@@ -42,11 +42,25 @@ public class KafkaSensorProducer {
      */
     public KafkaSensorProducer() {
         Properties kafkaProps = new Properties();
-        kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, ConfigLoader.get("kafka.bootstrap.servers"));
+        kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, ConfigLoader.get("KAFKA_BOOTSTRAP_SERVERS"));
         kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         this.topic = ConfigLoader.get("kafka.topic");
-        this.producer = new KafkaProducer<>(kafkaProps);
+        while(true){
+            try{
+                this.producer = new KafkaProducer<>(kafkaProps);
+                break;
+            } catch (Exception e) {
+                log.info("Kafka not ready, retrying in 5s... ");
+                try{
+                    Thread.sleep(5000);
+                }
+                catch (InterruptedException ie){
+                    log.error("❌ Failed to sleep: {}", ie.getMessage(), ie);
+                }
+            }
+        }
+
     }
 
     /*

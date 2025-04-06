@@ -7,7 +7,6 @@ public class ConfigLoaderTests {
 
     @Test
     void testLoadExistingProperties() {
-        assertEquals("localhost:9092", ConfigLoader.get("kafka.bootstrap.servers"));
         assertEquals("sensor-data", ConfigLoader.get("kafka.topic"));
         assertEquals(3344, ConfigLoader.getInt("sensor.temperature.port"));
         assertEquals(3355, ConfigLoader.getInt("sensor.humidity.port"));
